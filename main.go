@@ -38,39 +38,44 @@ func main() {
 	defer Conn.Close()
 
 	err := Conn.AddMatchSignal(
-		dbus.WithMatchSender("org.freedesktop.DBus"),
-		dbus.WithMatchObjectPath("/org/mpris/MediaPlayer2"))
+		dbus.WithMatchSender("org.freedesktop.DBus"))
 	if err != nil {
 		log.Fatalf("Failed to add properties match signal: %v", err)
 	}
-	
 	c := make(chan *dbus.Signal, 20)
 	Conn.Signal(c)
 	c <- nil
 	
 	for {
-		select {
-		case s := <-c:
-			if s != nil && s.Body != nil && strings.Contains(s.Body[0].(string), "MediaPlayer2") {
-				
+		stepProg(c)
+	}
+}
+
+// stepProg step the program once (needed for testing)
+func stepProg(c chan *dbus.Signal)  {
+	select {
+	case s := <-c:
+		if s != nil && s.Body != nil {
+			body, ok := s.Body[0].(string)
+			if ok && (strings.Contains(body, "MediaPlayer2")) {
 				updateMediaMap()
 			}
-			
-			// fmt.Printf("\n%+v  |  ", s)
-			
-			if ActivePlayer == nil {
-				fmt.Printf("%sNo media devices",ClearLine)
-				continue
-			}
-			
-			metadata, err := getPlayerTrack(ActivePlayer)
-			if err != nil {
-				fmt.Printf("%sNo media playing",ClearLine)
-				continue
-			} else {
-				fmt.Printf("%s%s", ClearLine, metadata)
-				// fmt.Println(metadata)
-			}
+		}
+		
+		// fmt.Printf("\n%+v  |  ", s)
+		
+		if ActivePlayer == nil {
+			fmt.Printf("%sNo media devices",ClearLine)
+			return
+		}
+		
+		metadata, err := getPlayerTrack(ActivePlayer)
+		if err != nil {
+			fmt.Printf("%sNo media playing",ClearLine)
+			return
+		} else {
+			fmt.Printf("%s%s", ClearLine, metadata)
+			// fmt.Println(metadata)
 		}
 	}
 }
@@ -91,11 +96,7 @@ func updateMediaMap() error {
 
 	for _, v := range s {
 		if strings.Contains(v, "MediaPlayer2") {
-			// if pl, exists := PlayerMap[v]; exists {
-			// 	newPlayerMap[v] = pl
-			// 	continue
-			// }
-			
+
 			play = &player{BusObject: Conn.Object(v, "/org/mpris/MediaPlayer2"), name: v}
 			newPlayerMap[v] = play
 

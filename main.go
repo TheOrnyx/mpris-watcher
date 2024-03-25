@@ -19,6 +19,7 @@ type player struct {
 
 var Conn *dbus.Conn
 var PlayerMap = make(map[string]*player)
+
 var ActivePlayer *player
 
 const ClearLine = "\033[2K\r"
@@ -75,16 +76,20 @@ func main() {
 
 	c := make(chan *dbus.Signal, 20)
 	Conn.Signal(c)
-	c <- nil
+	c <- nil // send fake signal just so it does the initial print
 
 	for {
-		stepProg(c)
+		dbusName, identity, playbackStatus, title, shouldchange := stepProg(c)
+		if shouldchange {	
+			fmt.Printf("%s\x1f%s\x1f%s\x1f%s\n", dbusName, identity, playbackStatus, title)
+			// fmt.Printf("%s %s %s %s\n", dbusName, identity, playbackStatus, title)
+		}
 	}
 }
 
 // stepProg step the program once (needed for testing)
 // TODO - maybe make it return a string instead of print one
-func stepProg(c chan *dbus.Signal) {
+func stepProg(c chan *dbus.Signal) (dbusName, niceName, playbackStatus, title string, shouldChange bool) {
 	select {
 	case s := <-c:
 
@@ -92,7 +97,7 @@ func stepProg(c chan *dbus.Signal) {
 			if s.Path == "/org/freedesktop/Notifications" {
 				return
 			}
-			
+
 			body, ok := s.Body[0].(string)
 			if ok && (strings.Contains(body, "MediaPlayer2")) {
 				updateMediaMap()
@@ -102,19 +107,20 @@ func stepProg(c chan *dbus.Signal) {
 		// fmt.Printf("\n%+v  |  ", s)
 
 		if ActivePlayer == nil {
-			fmt.Printf("%sNo media devices", ClearLine)
+			// fmt.Printf("%sNo media devices", ClearLine)
+			shouldChange = true
 			return
 		}
+		
+	
+		// if err != nil {
+		// 	// fmt.Printf("%sNo media playing", ClearLine)
+		// 	return
+		track, playbackStatus, identity, _ := ActivePlayer.GetPlayerInfo()
+		return ActivePlayer.name, identity, playbackStatus, track, true
 
-		metadata, err := ActivePlayer.getPlayerTrack()
-		if err != nil {
-			fmt.Printf("%sNo media playing", ClearLine)
-			return
-		} else {
-			playbackStatus, _ := ActivePlayer.getPlaybackStatus()
-			fmt.Printf("%s%s %s", ClearLine, playbackStatus, metadata)
-			// fmt.Println(metadata)
-		}
+		// fmt.Printf("%s%s %s", ClearLine, playbackStatus, metadata)
+		// fmt.Println(metadata)
 	}
 }
 
@@ -156,6 +162,26 @@ func updateMediaMap() error {
 	}
 
 	return nil
+}
+
+// GetPlayerInfo get the player info
+func (player *player) GetPlayerInfo() (track, playbackStatus, identity string, err error) {
+	track, err = player.getPlayerTrack()
+	if err != nil {
+		
+	}
+
+	playbackStatus, err = player.getPlaybackStatus()
+	if err != nil {
+		
+	}
+
+	identity, err = player.getPlayerIdentity()
+	if err != nil {
+		
+	}
+
+	return
 }
 
 // getPlayerTrack Take in a busobject and return its currently playing track and it's playback status
@@ -200,4 +226,19 @@ func (player *player) getPlaybackStatus() (string, error) {
 	}
 
 	return "", fmt.Errorf("Failed to match playback status with value %v", status)
+}
+
+// getPlayerIdentity Get the identity for the given player
+func (player *player) getPlayerIdentity() (string, error) {
+	prop, err := player.GetProperty("org.mpris.MediaPlayer2.Identity")
+	if err != nil {
+		return "", fmt.Errorf("Failed to get identity: %v", err)
+	}
+
+	identity, ok := prop.Value().(string)
+	if ok {
+		return identity, nil
+	}
+
+	return "", fmt.Errorf("Failed to find identity")
 }

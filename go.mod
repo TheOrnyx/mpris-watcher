@@ -1,4 +1,4 @@
-module dbus-media
+module mpris-watcher
 
 go 1.22.1
 

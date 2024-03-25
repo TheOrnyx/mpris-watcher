@@ -14,17 +14,15 @@ func Test(t *testing.T) {
 	testStartTime := time.Now()
 	defer Conn.Close()
 
-	err := Conn.AddMatchSignal(
-		dbus.WithMatchSender("org.freedesktop.DBus"))
-	if err != nil {
-		log.Fatalf("Failed to add properties match signal: %v", err)
-	}
 	c := make(chan *dbus.Signal, 20)
 	Conn.Signal(c)
 	c <- nil
 	
 	for time.Since(testStartTime) < totalTestTime {
-		stepProg(c)
+		d, n, p, t, change := stepProg(c)
+		if change {
+			log.Printf("%s\x1f%s\x1f%s\x1f%s\n", d, n, p, t)
+		}
 	}
 }
 
@@ -32,11 +30,6 @@ func BenchmarkProg(b *testing.B) {
 	testStartTime := time.Now()
 	defer Conn.Close()
 
-	err := Conn.AddMatchSignal(
-		dbus.WithMatchSender("org.freedesktop.DBus"))
-	if err != nil {
-		log.Fatalf("Failed to add properties match signal: %v", err)
-	}
 	c := make(chan *dbus.Signal, 20)
 	Conn.Signal(c)
 	c <- nil

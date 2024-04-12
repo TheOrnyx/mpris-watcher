@@ -1,8 +1,16 @@
 #+TITLE: mpris-watcher - a script to watch dbus
+This is a script that watches Mpris DBus objects and returns a string
+representation of them, it was created for use on my friends window manager bar.
+
+At the moment it exposes two methods to DBus, these being
+~com.ornyx.MprisWatcher.Prev~ and ~com.ornyx.MprisWatcher.Next~
+
+There's a highly likely chance this doesn't work properly or messes up etc, it's
+still kinda a WIP but hopefully it works well enough
+
+
 I hate you sofa, why did you do this to me. I hate dbus, I hate dbus I hate
 dbus.
-
-
 #+begin_src java
                       .                   
                    ..                   

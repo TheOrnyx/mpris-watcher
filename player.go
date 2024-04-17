@@ -12,27 +12,13 @@ type player struct {
 	name string
 }
 
-// Next go to the next active mediaplayer
-func (p *player) Next() *dbus.Error {
-	if len(PlayerList) == 0 {
-		PlayerNum = 0
+// PlayPause toggle between playing and pausing
+func (p *player) PlayPause() *dbus.Error {
+	if p == nil {
 		return nil
 	}
 
-	PlayerNum = (PlayerNum + 1) % len(PlayerList)
-	updateMediaMap()
-	return nil
-}
-
-// Prev go to the previous active mediaplayer
-func (p *player) Prev() *dbus.Error {
-	if len(PlayerList) == 0 {
-		PlayerNum = 0
-		return nil
-	}
-
-	PlayerNum = (PlayerNum + len(PlayerList) - 1) % len(PlayerList)
-	updateMediaMap()
+	p.Call("org.mpris.MediaPlayer2.Player.PlayPause", 0)
 	return nil
 }
 

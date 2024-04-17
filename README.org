@@ -2,8 +2,13 @@
 This is a script that watches Mpris DBus objects and returns a string
 representation of them, it was created for use on my friends window manager bar.
 
-At the moment it exposes two methods to DBus, these being
-~com.ornyx.MprisWatcher.Prev~ and ~com.ornyx.MprisWatcher.Next~
+At the moment it exposes some methods to dbus which you can run, these being:
+| Method name                        | Desc                                                                                 |
+|------------------------------------+--------------------------------------------------------------------------------------|
+| ~com.ornyx.MprisWatcher.Next~      | Switch the activeplayer to the next mediaPlayer object with wrapping around          |
+| ~com.ornyx.MprisWatcher.Prev~      | Switch the activeplayer to the previous mediaPlayer object with wrapping back around |
+| ~com.ornyx.MprisWatcher.PlayPause~ | Toggle between playing and pausing the active mediaPlayer object                     |
+
 
 There's a highly likely chance this doesn't work properly or messes up etc, it's
 still kinda a WIP but hopefully it works well enough

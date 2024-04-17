@@ -19,6 +19,7 @@ var intro string
 var Conn *dbus.Conn
 var PlayerList []*player
 var ActivePlayer *player
+var introspectObj = &introspector{}
 var PlayerNum = 0 // the number in PlayerList to use
 
 // the play pause constants - TODO - maybe replace these with symbols from like a config file or smth
@@ -81,8 +82,9 @@ func initMatchSignals() error {
 }
 
 // initMethodExport initialize the method exports for the Player Object
+// TODO - maybe instead of using activeplayer make a new type because like if on startup activeplayer is nil then it always thinks it's nil?
 func initMethodExport() error {
-	Conn.Export(ActivePlayer, "/com/ornyx/MprisWatcher", "com.ornyx.MprisWatcher")
+	Conn.Export(introspectObj, "/com/ornyx/MprisWatcher", "com.ornyx.MprisWatcher")
 	Conn.Export(introspect.Introspectable(intro), "/com/ornyx/MprisWatcher",
 		"org.freedesktop.DBus.Introspectable")
 

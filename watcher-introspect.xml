@@ -4,6 +4,9 @@
     </method>
     <method name="Prev">
     </method>
+    <method name="PlayPause">
+    </method>
+      
   </interface>
   <interface name="org.freedesktop.DBus.Introspectable">
     <method name="Introspect">

@@ -1,0 +1,13 @@
+<node>
+  <interface name="com.ornyx.MprisWatcher">
+    <method name="Next">
+    </method>
+    <method name="Prev">
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg name="out" direction="out" type="s"/>
+    </method>
+  </interface>
+</node>

@@ -7,20 +7,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/introspect"
 )
 
-const intro = `
-<node>
-	<interface name="com.ornyx.MprisWatcher">
-   		<method name="Next">
-   		</method>
-   		<method name="Prev">
-   		</method>
-   	</interface>` + introspect.IntrospectDataString + `</node> `
+var intro string
 
 type player struct {
 	dbus.BusObject
@@ -33,8 +27,8 @@ func (p *player) Next() *dbus.Error {
 		PlayerNum = 0
 		return nil
 	}
-	
-	PlayerNum = (PlayerNum+1) % len(PlayerList)
+
+	PlayerNum = (PlayerNum + 1) % len(PlayerList)
 	updateMediaMap()
 	return nil
 }
@@ -45,7 +39,7 @@ func (p *player) Prev() *dbus.Error {
 		PlayerNum = 0
 		return nil
 	}
-	
+
 	PlayerNum = (PlayerNum + len(PlayerList) - 1) % len(PlayerList)
 	updateMediaMap()
 	return nil
@@ -70,6 +64,12 @@ func init() {
 		Conn.Close()
 		log.Fatalf("Failed to initialize: %v", err)
 	}
+
+	introFile, err := os.ReadFile("./watcher-introspect.xml")
+	if err != nil {
+		failFunc(fmt.Errorf("Failed to open introspect xml: %v", err))
+	}
+	intro = string(introFile)
 
 	if err != nil {
 		failFunc(fmt.Errorf("Failed to connect to dbus session bus: %v", err))
@@ -135,7 +135,7 @@ func main() {
 
 	for {
 		dbusName, identity, playbackStatus, title, shouldchange := stepProg(c)
-		if shouldchange {	
+		if shouldchange {
 			fmt.Printf("%s\x1f%s\x1f%s\x1f%s\n", dbusName, identity, playbackStatus, title)
 			// for _, p := range PlayerList {
 			// 	fmt.Println(p.GetPlayerInfo())
@@ -168,7 +168,7 @@ func stepProg(c chan *dbus.Signal) (dbusName, niceName, playbackStatus, title st
 			shouldChange = true
 			return
 		}
-		
+
 		track, playbackStatus, identity, _ := ActivePlayer.GetPlayerInfo()
 		return ActivePlayer.name, identity, playbackStatus, track, true
 	}
@@ -191,7 +191,7 @@ func updateMediaMap() error {
 	for _, v := range s {
 		if strings.Contains(v, "MediaPlayer2") {
 			play = &player{BusObject: Conn.Object(v, "/org/mpris/MediaPlayer2"), name: v}
-			newPlayerList =  append(newPlayerList, play)
+			newPlayerList = append(newPlayerList, play)
 
 			if ActivePlayer == nil {
 				ActivePlayer = newPlayerList[0]
@@ -215,17 +215,17 @@ func updateMediaMap() error {
 func (player *player) GetPlayerInfo() (track, playbackStatus, identity string, err error) {
 	track, err = player.getPlayerTrack()
 	if err != nil {
-		
+
 	}
 
 	playbackStatus, err = player.getPlaybackStatus()
 	if err != nil {
-		
+
 	}
 
 	identity, err = player.getPlayerIdentity()
 	if err != nil {
-		
+
 	}
 
 	return

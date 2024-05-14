@@ -72,13 +72,13 @@ func init() {
 // TODO - make it only match mediaplayer signals
 func initMatchSignals() error {
 	err := Conn.AddMatchSignal(
-		dbus.WithMatchSender("org.freedesktop.DBus"))
+		dbus.WithMatchObjectPath("/org/mpris/MediaPlayer2"))
 	if err != nil {
 		return fmt.Errorf("Failed to add properties match signal: %v", err)
 	}
 
 	err = Conn.AddMatchSignal(
-		dbus.WithMatchMember("PropertiesChanged"))
+		dbus.WithMatchMember("NameOwnerChanged"))
 	if err != nil {
 		return fmt.Errorf("Failed to add properties match signal: %v", err)
 	}

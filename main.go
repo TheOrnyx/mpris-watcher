@@ -4,6 +4,8 @@ package main
 // Maybe filter out notification sounds for like discord
 // Add sending a signal to choose your active player
 // definitely fix the signal filtering
+// TODO - maybe add some CLI flags for controlling what gets viewed etc
+// TODO - maybe seperate some of the like commented out pieces into actual debug code with a flag or smth
 
 import (
 	"fmt"

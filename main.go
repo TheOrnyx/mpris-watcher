@@ -3,6 +3,7 @@ package main
 // TODO
 // Maybe filter out notification sounds for like discord
 // Add sending a signal to choose your active player
+// definitely fix the signal filtering
 
 import (
 	"fmt"
@@ -20,7 +21,8 @@ var Conn *dbus.Conn
 var PlayerList []*player
 var ActivePlayer *player
 var introspectObj = &introspector{}
-var PlayerNum = 0 // the number in PlayerList to use
+var PlayerNum = 0                 // the number in PlayerList to use
+var DisplayInfo = new(activeInfo) // the display info for the current player (updated constantly)
 
 // the play pause constants - TODO - maybe replace these with symbols from like a config file or smth
 const (
@@ -29,6 +31,7 @@ const (
 	StopSymbol  = "⏹"
 )
 
+// initialize a bunch of stuff for the script
 func init() {
 	var err error
 	Conn, err = dbus.ConnectSessionBus()
@@ -82,7 +85,6 @@ func initMatchSignals() error {
 }
 
 // initMethodExport initialize the method exports for the Player Object
-// TODO - maybe instead of using activeplayer make a new type because like if on startup activeplayer is nil then it always thinks it's nil?
 func initMethodExport() error {
 	Conn.Export(introspectObj, "/com/ornyx/MprisWatcher", "com.ornyx.MprisWatcher")
 	Conn.Export(introspect.Introspectable(intro), "/com/ornyx/MprisWatcher",
@@ -107,9 +109,9 @@ func main() {
 	c <- nil // send fake signal just so it does the initial print
 
 	for {
-		dbusName, identity, playbackStatus, title, shouldchange := stepProg(c)
+		shouldchange := stepProg(c, DisplayInfo)
 		if shouldchange {
-			fmt.Printf("%s\x1f%s\x1f%s\x1f%s\n", dbusName, identity, playbackStatus, title)
+			fmt.Printf("%s\n", DisplayInfo)
 			// for _, p := range PlayerList {
 			// 	fmt.Println(p.GetPlayerInfo())
 			// }
@@ -121,7 +123,7 @@ func main() {
 }
 
 // stepProg step the program once and return the player information
-func stepProg(c chan *dbus.Signal) (dbusName, niceName, playbackStatus, title string, shouldChange bool) {
+func stepProg(c chan *dbus.Signal, info *activeInfo) (shouldChange bool) {
 	select {
 	case s := <-c:
 		if s != nil && s.Body != nil {
@@ -139,16 +141,17 @@ func stepProg(c chan *dbus.Signal) (dbusName, niceName, playbackStatus, title st
 
 		if ActivePlayer == nil {
 			shouldChange = true
+			DisplayInfo.Clear()
 			return
 		}
 
-		track, playbackStatus, identity, _ := ActivePlayer.GetPlayerInfo()
-		return ActivePlayer.name, identity, playbackStatus, track, true
+		ActivePlayer.GetPlayerInfo(info) // put all the activeplayers info into the info struct
+		return true
 	}
 }
 
-// updateMediaMap Scan the dbus items and update the MediaMap with any
-// that don't exist there, also check that none have been removed
+// updateMediaMap Scan the dbus items and update the MediaMap with any that don't exist
+// there, also check that none have been removed
 func updateMediaMap() error {
 	var s []string
 	var err error

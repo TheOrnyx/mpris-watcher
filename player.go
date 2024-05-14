@@ -35,10 +35,15 @@ func (player *player) GetPlayerInfo() (track, playbackStatus, identity string, e
 
 	}
 
-	identity, err = player.getPlayerIdentity()
+	identity, err = player.getPlayerDesktopEntry()
 	if err != nil {
 
 	}
+	
+	// identity, err = player.getPlayerIdentity()
+	// if err != nil {
+
+	// }
 
 	return
 }
@@ -53,14 +58,13 @@ func (player *player) getPlayerTrack() (string, error) {
 	v, ok := prop.Value().(map[string]dbus.Variant)
 	if ok {
 		if val, ok := v["xesam:title"]; ok {
-			return val.String(), nil
+			return val.Value().(string), nil // should be fine with the unsafe cast
 		}
 		if val, ok := v["xesam:url"]; ok {
-			return val.String(), nil
+			return val.Value().(string), nil // it's probably always a string - cbf checking :P
 		}
 		return "", fmt.Errorf("Media missing track title")
 	}
-
 	return "", fmt.Errorf("Metadata not found")
 }
 
@@ -100,4 +104,19 @@ func (player *player) getPlayerIdentity() (string, error) {
 	}
 
 	return "", fmt.Errorf("Failed to find identity")
+}
+
+// getPlayerDesktopEntry Get this players desktop entry
+func (player *player) getPlayerDesktopEntry() (string, error) {
+	prop, err := player.GetProperty("org.mpris.MediaPlayer2.DesktopEntry")
+	if err != nil {
+		return "", fmt.Errorf("Failed to get desktopEntry: %v", err)
+	}
+
+	identity, ok := prop.Value().(string)
+	if ok {
+		return identity, nil
+	}
+
+	return "", fmt.Errorf("Failed to find DesktopEntry")
 }
